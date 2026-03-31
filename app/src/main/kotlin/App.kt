@@ -5,21 +5,26 @@ fun main(args: Array<String>) {
     val serverSocket = ServerSocket(6379)
     serverSocket.reuseAddress = true
 
-    val socket = serverSocket.accept() // Wait for connection from client.
-    println("accepted new connection")
-
-    val reader = socket.getInputStream().bufferedReader()
-    val outputStream = socket.getOutputStream()
 
     while (true) {
-        // *1\r\n$4\r\nPING\r\n 형식으로 온다
-        val line: String = reader.readLine() ?: break
-        if (line.equals("PING", ignoreCase = true)) {
-            outputStream.write(convertREsp("PONG"))
-            outputStream.flush()
+        val socket = serverSocket.accept() // Wait for connection from client.
+        println("accepted new connection")
+
+        val reader = socket.getInputStream().bufferedReader()
+        val outputStream = socket.getOutputStream()
+        Thread.startVirtualThread {
+            while (true) {
+
+                // *1\r\n$4\r\nPING\r\n 형식으로 온다
+                val line: String = reader.readLine() ?: return@startVirtualThread
+
+                if (line.equals("PING", ignoreCase = true)) {
+                    outputStream.write(convertREsp("PONG"))
+                    outputStream.flush()
+                }
+            }
         }
     }
-    println("Finish")
 }
 
 
