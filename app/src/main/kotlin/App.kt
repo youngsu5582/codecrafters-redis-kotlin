@@ -8,10 +8,20 @@ fun main(args: Array<String>) {
     val socket = serverSocket.accept() // Wait for connection from client.
     println("accepted new connection")
 
-    val inputStream = socket.getInputStream()
-    val line = inputStream.bufferedReader().readLine()
-    println(line)
-
+    val reader = socket.getInputStream().bufferedReader()
     val outputStream = socket.getOutputStream()
-    outputStream.write("+PONG\r\n".toByteArray())
+
+    while (true) {
+        // *1\r\n$4\r\nPING\r\n 형식으로 온다
+        val line: String = reader.readLine() ?: break
+        if (line.equals("PING", ignoreCase = true)) {
+            outputStream.write(convertREsp("PONG"))
+            outputStream.flush()
+        }
+    }
+    println("Finish")
 }
+
+
+private fun convertREsp(line: String): ByteArray =
+    "+$line\r\n".toByteArray()
