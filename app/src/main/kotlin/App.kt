@@ -5,12 +5,13 @@ fun main(args: Array<String>) {
     System.err.println("Logs from your program will appear here!")
 
     // Uncomment the code below to pass the first stage
-    // var serverSocket = ServerSocket(6379)
+    // 레디스는 TCP 통신한다. - 클라이언트, 서버간 신뢰있는 데이터 교환
+    val serverSocket = ServerSocket(6379)
     //
     // // Since the tester restarts your program quite often, setting SO_REUSEADDR
     // // ensures that we don't run into 'Address already in use' errors
-    // serverSocket.reuseAddress = true
+    serverSocket.reuseAddress = true
     //
-    // serverSocket.accept() // Wait for connection from client.
-    // println("accepted new connection")
+    serverSocket.accept() // Wait for connection from client.
+    println("accepted new connection")
 }
