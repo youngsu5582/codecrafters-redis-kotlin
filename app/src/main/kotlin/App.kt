@@ -1,17 +1,17 @@
 import java.net.ServerSocket
 
 fun main(args: Array<String>) {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    System.err.println("Logs from your program will appear here!")
-
-    // Uncomment the code below to pass the first stage
     // 레디스는 TCP 통신한다. - 클라이언트, 서버간 신뢰있는 데이터 교환
     val serverSocket = ServerSocket(6379)
-    //
-    // // Since the tester restarts your program quite often, setting SO_REUSEADDR
-    // // ensures that we don't run into 'Address already in use' errors
     serverSocket.reuseAddress = true
-    //
-    serverSocket.accept() // Wait for connection from client.
+
+    val socket = serverSocket.accept() // Wait for connection from client.
     println("accepted new connection")
+
+    val inputStream = socket.getInputStream()
+    val line = inputStream.bufferedReader().readLine()
+    println(line)
+
+    val outputStream = socket.getOutputStream()
+    outputStream.write("+PONG\r\n".toByteArray())
 }
