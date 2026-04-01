@@ -16,14 +16,5 @@ PONG
   - \r\n (CRLF) 로 각 데이터 단위 구분
   - 첫 바이트로 데이터 타입을 구분한다.
 
-- 데이터 타입
-
-```
-`+` : Simple String
-`:` : Integer
-`$` : Bulk String
-`*` : Array
-```
-
 사실, 네트워크는 `+PONG\r\n` 로 반환한다.
 `+` (Simple String) + `PONG` + `\r\n`
