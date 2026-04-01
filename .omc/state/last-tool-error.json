@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"git filter-branch -f --env-filter 'export GIT_AUTHOR_NAME=\\\"youngsu5582\\\" GIT_AUTHOR_EMAIL=\\\"98307410+youngsu5582@users.noreply.github.com\\\" GIT_COMMITTER_NAME=\\\"youngsu5582\\\" GIT_COMMITTE...",
+  "error": "Exit code 1\nWARNING: git-filter-branch has a glut of gotchas generating mangled history\n\t rewrites.  Hit Ctrl-C before proceeding to abort, then use an\n\t alternative filtering tool such as 'git filter-repo'\n\t (https://github.com/newren/git-filter-repo/) instead.  See the\n\t filter-branch manual page for more details; to squelch this warning,\n\t set FILTER_BRANCH_SQUELCH_WARNING=1.\nProceeding with filter-branch...\n\nCannot rewrite branches: You have unstaged changes.",
+  "timestamp": "2026-03-31T15:17:29.301Z",
+  "retry_count": 1
+}
