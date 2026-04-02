@@ -3,6 +3,9 @@ import java.io.BufferedReader
 import java.io.EOFException
 import java.net.ServerSocket
 
+// 일단, 전역 캐시로 설정. 필요에 따라 리팩토링
+val cache = Cache()
+
 fun main(args: Array<String>) {
     // 레디스는 TCP 통신한다. - 클라이언트, 서버간 신뢰있는 데이터 교환
     val serverSocket = ServerSocket(6379)
@@ -50,6 +53,22 @@ private fun executeCommand(value: RespValue.Array): String {
     if (command == "ECHO") {
         return convertData(RespData(DataType.BULK_STRING, args[1]))
     }
+
+    if (command == "SET") {
+        val key = args[1]
+        val value = args[2]
+        cache.put(key, value)
+        return convertData(RespData(DataType.SIMPLE_STRING, "OK"))
+    }
+    if (command == "GET") {
+        val key = args[1]
+        val value = cache.get(key)
+        if (value == null) {
+            return convertData(RespData(DataType.BULK_STRING, null))
+        }
+        return convertData(RespData(DataType.BULK_STRING, value))
+    }
+
     throw IllegalArgumentException("Unknown command $command")
 }
 
@@ -61,7 +80,11 @@ private fun readData(reader: BufferedReader): RespValue {
     // 1차 파싱
     val data = parseData(line)
     println("data: $data")
+    if (data.value == null) {
+        throw EOFException("No data found")
+    }
     when (data.type) {
+
         DataType.BULK_STRING -> {
             val length = data.value.toInt()
             val strings = reader.readLine()
@@ -119,7 +142,9 @@ sealed class RespValue {
  */
 data class RespData(
     val type: DataType,
-    val value: String
+    // 차차, 구조를 생각하면 Sealed Class 로 바뀌는게 맞는거 같긴 한데
+    // 당장 최소한의 변경으로 구현하기 위해 String -> String? nullable 로 변경
+    val value: String?
 )
 
 enum class DataType(val value: Char) {
@@ -164,7 +189,11 @@ fun convertData(data: RespData): String {
         }
 
         DataType.BULK_STRING -> {
-            "$" + data.value.length + Constant.LINE_SEPARATOR + data.value + Constant.LINE_SEPARATOR
+            if (data.value == null) {
+                "$" + -1 + Constant.LINE_SEPARATOR
+            } else {
+                "$" + data.value.length + Constant.LINE_SEPARATOR + data.value + Constant.LINE_SEPARATOR
+            }
         }
 
         DataType.ARRAY -> {
