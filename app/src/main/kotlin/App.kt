@@ -46,7 +46,7 @@ fun main(args: Array<String>) {
 private fun executeCommand(value: RespValue.Array): String {
     println("executing command $value")
     val args = value.value.map { (it as RespValue.BulkString).value }
-    val command = args[0]
+    val command = args[0].uppercase()
     if (command == "PING") {
         return convertData(RespData(DataType.SIMPLE_STRING, "PONG"))
     }
@@ -57,7 +57,15 @@ private fun executeCommand(value: RespValue.Array): String {
     if (command == "SET") {
         val key = args[1]
         val value = args[2]
-        cache.put(key, value)
+        if (args.size <= 3) {
+            cache.put(key, value)
+            return convertData(RespData(DataType.SIMPLE_STRING, "OK"))
+        }
+
+        val option = TimeOption.from(args[3])
+        val number = args[4].toLong()
+
+        cache.put(key, value, option.toMills(number))
         return convertData(RespData(DataType.SIMPLE_STRING, "OK"))
     }
     if (command == "GET") {

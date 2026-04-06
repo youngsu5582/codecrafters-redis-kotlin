@@ -29,3 +29,10 @@ test-key 에 world 로 SET 하고, 이전에 설정된 값을 GET 해온다.
 SET 의 옵션들로 인해, `SETNX`, `SETEX`, `PSETEX`, `GETSET` 명령어들을 대체 가능하다.
 
 - `OK` 라는 Simple String 을 반환한다.
+
+### Expiry
+
+- EX : second 지정
+- PX : ms 지정
+
+키가 만료되면, 접근 불가능하다. null Bulk String 을 반환한다.
