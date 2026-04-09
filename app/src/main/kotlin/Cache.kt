@@ -2,7 +2,6 @@ import clock.Clock
 import clock.SystemClock
 import util.CustomLogger
 import java.util.*
-import kotlin.math.log
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -18,9 +17,9 @@ class Cache(
 
     // 시간 테스팅 용이하게 하기 위한 인터페이스 주입
 
-    fun rightPush(key: String, value: String): Int {
+    fun rightPush(key: String, elements: List<String>): Int {
         val array: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
-        array.addLast(value)
+        elements.forEach { array.addLast(it) }
         arrayCache[key] = array
         return array.size
     }

@@ -73,7 +73,13 @@ class CacheTests {
     @Test
     fun `RPUSH 를 하면, 배열 내 요소의 숫자를 반환한다`() {
         val cache = Cache()
-        assertTrue { cache.rightPush("key", "value1") == 1 }
-        assertTrue { cache.rightPush("key", "value2") == 2 }
+        assertTrue { cache.rightPush("key", listOf("value1")) == 1 }
+        assertTrue { cache.rightPush("key", listOf("value2")) == 2 }
+    }
+
+    @Test
+    fun `RPUSH 는 여러개의 요소를 한번에 삽입할 수 있다`() {
+        val cache = Cache()
+        assertTrue { cache.rightPush("key", listOf("value1", "value2")) == 2 }
     }
 }

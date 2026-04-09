@@ -56,7 +56,7 @@ private fun executeCommand(value: RespValue.Array): String {
 
     if (command == "RPUSH") {
         val key = args[1]
-        val value = args[2]
+        val value = args.subList(2, args.size)
         val size = cache.rightPush(key, value)
         return convertData(RespData(DataType.INTEGERS, size.toString()))
     }
