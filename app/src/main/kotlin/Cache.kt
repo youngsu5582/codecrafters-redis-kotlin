@@ -14,8 +14,16 @@ class Cache(
     // -> Expiry 단계 진행하며, 테이블 추가
     private val timeTable = TreeMap<Long, MutableSet<String>>()
     private val cache = hashMapOf<String, String>()
+    private val arrayCache = hashMapOf<String, Deque<String>>()
 
     // 시간 테스팅 용이하게 하기 위한 인터페이스 주입
+
+    fun rightPush(key: String, value: String): Int {
+        val array: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        array.addLast(value)
+        arrayCache[key] = array
+        return array.size
+    }
 
     fun put(key: String, value: String) {
         // TTL 지정하지 않았으면, LONG 의 최대값으로 처리
@@ -37,7 +45,7 @@ class Cache(
 
     private fun putImpl(key: String, value: String, time: Long) {
         cache[key] = value
-        
+
         if (time == Long.MAX_VALUE) {
             return
         }

@@ -54,6 +54,13 @@ private fun executeCommand(value: RespValue.Array): String {
         return convertData(RespData(DataType.BULK_STRING, args[1]))
     }
 
+    if (command == "RPUSH") {
+        val key = args[1]
+        val value = args[2]
+        val size = cache.rightPush(key, value)
+        return convertData(RespData(DataType.INTEGERS, size.toString()))
+    }
+
     if (command == "SET") {
         val key = args[1]
         val value = args[2]
