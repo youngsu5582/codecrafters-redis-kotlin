@@ -24,6 +24,23 @@ class Cache(
         return array.size
     }
 
+    /**
+     * list 의 start ~ stop 반환
+     * - list 가 존재하지 않으면, 빈 배열 반환
+     * - start 가 길이보다 크거나 같으면, 빈 배열 반환
+     * - stop 이 길이보다 크거나 같으면, 마지막 인덱스로 간주
+     * - start 가 stop 보다 크면, 빈 배열 반환
+     */
+    fun leftRange(key: String, start: Int, stop: Int): List<String> {
+        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val array = mutableListOf<String>()
+        for ((i, element) in queue.withIndex()) {
+            if (i > stop) break
+            if (i >= start) array.add(element)
+        }
+        return array
+    }
+
     fun put(key: String, value: String) {
         // TTL 지정하지 않았으면, LONG 의 최대값으로 처리
         CustomLogger.info("$key 에 $value 를 넣습니다. 만료시간: X")

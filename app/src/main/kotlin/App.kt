@@ -48,17 +48,26 @@ private fun executeCommand(value: RespValue.Array): String {
     val args = value.value.map { (it as RespValue.BulkString).value }
     val command = args[0].uppercase()
     if (command == "PING") {
-        return convertData(RespData(DataType.SIMPLE_STRING, "PONG"))
+        RespValue.SimpleString("PONG")
+        return convertData(RespValue.SimpleString("PONG"))
     }
     if (command == "ECHO") {
-        return convertData(RespData(DataType.BULK_STRING, args[1]))
+        return convertData(RespValue.BulkString(args[1]))
+    }
+
+    if (command == "LRANGE") {
+        val key = args[1]
+        val start = args[2].toInt()
+        val end = args[3].toInt()
+        val array = cache.leftRange(key, start, end)
+        return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
     }
 
     if (command == "RPUSH") {
         val key = args[1]
         val value = args.subList(2, args.size)
         val size = cache.rightPush(key, value)
-        return convertData(RespData(DataType.INTEGERS, size.toString()))
+        return convertData(RespValue.Integers(size))
     }
 
     if (command == "SET") {
@@ -66,22 +75,22 @@ private fun executeCommand(value: RespValue.Array): String {
         val value = args[2]
         if (args.size <= 3) {
             cache.put(key, value)
-            return convertData(RespData(DataType.SIMPLE_STRING, "OK"))
+            return convertData(RespValue.SimpleString("OK"))
         }
 
         val option = TimeOption.from(args[3])
         val number = args[4].toLong()
 
         cache.put(key, value, option.toMills(number))
-        return convertData(RespData(DataType.SIMPLE_STRING, "OK"))
+        return convertData(RespValue.SimpleString("OK"))
     }
     if (command == "GET") {
         val key = args[1]
         val value = cache.get(key)
         if (value == null) {
-            return convertData(RespData(DataType.BULK_STRING, null))
+            return convertData(RespValue.Empty)
         }
-        return convertData(RespData(DataType.BULK_STRING, value))
+        return convertData(RespValue.BulkString(value))
     }
 
     throw IllegalArgumentException("Unknown command $command")
@@ -141,11 +150,11 @@ private fun readData(reader: BufferedReader): RespValue {
 sealed class RespValue {
     data class SimpleString(val value: String) : RespValue()
     data class BulkString(val value: String) : RespValue()
+    object Empty : RespValue()
     data class Error(val value: String) : RespValue()
     data class Integers(val value: Int) : RespValue()
     data class Array(val value: List<RespValue>) : RespValue()
 }
-
 
 /**
  * 파싱 전 데이터
@@ -189,30 +198,21 @@ fun parseData(line: String): RespData {
     return RespData(type, line.substring(1))
 }
 
-fun convertData(data: RespData): String {
-    return when (data.type) {
-        DataType.SIMPLE_STRING -> {
-            "+" + data.value + Constant.LINE_SEPARATOR
-        }
-
-        DataType.ERRORS -> {
-            "-" + data.value + Constant.LINE_SEPARATOR
-        }
-
-        INTEGERS -> {
-            ":" + data.value + Constant.LINE_SEPARATOR
-        }
-
-        DataType.BULK_STRING -> {
-            if (data.value == null) {
-                "$" + -1 + Constant.LINE_SEPARATOR
-            } else {
-                "$" + data.value.length + Constant.LINE_SEPARATOR + data.value + Constant.LINE_SEPARATOR
+fun convertData(value: RespValue): String {
+    return when (value) {
+        is RespValue.SimpleString -> "+" + value.value + Constant.LINE_SEPARATOR
+        is RespValue.Error -> "-" + value.value + Constant.LINE_SEPARATOR
+        is RespValue.Integers -> ":" + value.value + Constant.LINE_SEPARATOR
+        is RespValue.BulkString -> "$" + value.value.length + Constant.LINE_SEPARATOR + value.value + Constant.LINE_SEPARATOR
+        is RespValue.Empty -> "$" + -1 + Constant.LINE_SEPARATOR
+        is RespValue.Array -> {
+            val length = value.value.size
+            val builder = StringBuilder()
+            builder.append("*" + length + Constant.LINE_SEPARATOR)
+            value.value.forEach { it ->
+                builder.append(convertData(it))
             }
-        }
-
-        DataType.ARRAY -> {
-            throw NotImplementedError("TODO Implemented!")
+            builder.toString()
         }
     }
 }

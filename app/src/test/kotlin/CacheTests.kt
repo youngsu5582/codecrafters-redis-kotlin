@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import kotlin.time.ExperimentalTime
 
 class CacheTests {
     @Test
@@ -81,5 +82,36 @@ class CacheTests {
     fun `RPUSH 는 여러개의 요소를 한번에 삽입할 수 있다`() {
         val cache = Cache()
         assertTrue { cache.rightPush("key", listOf("value1", "value2")) == 2 }
+    }
+
+    @Nested
+    inner class LeftRangeTest {
+        val cache = Cache()
+
+        @BeforeEach
+        fun setup() {
+            cache.rightPush("key", listOf("a", "b", "c", "d", "e"))
+        }
+
+        @Test
+        fun `LRANGE 는 왼쪽부터 오른쪽으로 해당하는 범위를 반환한다`() {
+            assertTrue { cache.leftRange("key", 0, 1) == listOf("a", "b") }
+            assertTrue { cache.leftRange("key", 2, 4) == listOf("c", "d", "e") }
+        }
+
+        @Test
+        fun `start 가 길이보다 크거나 같으면, 빈 배열을 반환한다`() {
+            assertTrue { cache.leftRange("key", 5, 5) == emptyList<String>() }
+        }
+
+        @Test
+        fun `stop 이 길이보다 크거나 같으면, 마지막 인덱스로 간주한다`() {
+            assertTrue { cache.leftRange("key", 2, 1000) == listOf("c", "d", "e") }
+        }
+
+        @Test
+        fun `start 가 stop 보다 크면, 빈 배열을 반환한다`() {
+            assertTrue { cache.leftRange("key", 4, 2) == emptyList<String>() }
+        }
     }
 }
