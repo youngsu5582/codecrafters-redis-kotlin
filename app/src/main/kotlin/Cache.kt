@@ -24,6 +24,13 @@ class Cache(
         return array.size
     }
 
+    fun leftPush(key: String, elements: List<String>): Int {
+        val array: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        elements.forEach { array.addFirst(it) }
+        arrayCache[key] = array
+        return array.size
+    }
+
     /**
      * list 의 start ~ stop 반환
      * - list 가 존재하지 않으면, 빈 배열 반환

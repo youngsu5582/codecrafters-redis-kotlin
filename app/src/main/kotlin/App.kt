@@ -70,6 +70,13 @@ private fun executeCommand(value: RespValue.Array): String {
         return convertData(RespValue.Integers(size))
     }
 
+    if (command == "LPUSH") {
+        val key = args[1]
+        val value = args.subList(2, args.size)
+        val size = cache.leftPush(key, value)
+        return convertData(RespValue.Integers(size))
+    }
+
     if (command == "SET") {
         val key = args[1]
         val value = args[2]

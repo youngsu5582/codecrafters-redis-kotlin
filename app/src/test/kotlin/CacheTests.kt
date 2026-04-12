@@ -120,4 +120,29 @@ class CacheTests {
             assertTrue { cache.leftRange("key", 0, -3) == listOf("a", "b", "c") }
         }
     }
+
+    @Nested
+    inner class LeftPushTest {
+
+        @Test
+        fun `LPUSH 를 하면, 배열 내 요소의 숫자를 반환한다`() {
+            val cache = Cache()
+            assertTrue { cache.leftPush("key", listOf("value1")) == 1 }
+            assertTrue { cache.leftPush("key", listOf("value2")) == 2 }
+        }
+
+        @Test
+        fun `LPUSH 는 여러개의 요소를 한번에 삽입할 수 있다`() {
+            val cache = Cache()
+            assertTrue { cache.leftPush("key", listOf("value1", "value2")) == 2 }
+        }
+
+        @Test
+        fun `LPUSH 는 리스트 앞에 삽입한다`() {
+            val cache = Cache()
+            val key = "list_key"
+            cache.leftPush(key, listOf("a", "b", "c"))
+            assertTrue { cache.leftRange(key, 0, -1) == listOf("c", "b", "a") }
+        }
+    }
 }
