@@ -51,6 +51,11 @@ class Cache(
         return array
     }
 
+    fun leftLength(key: String): Int {
+        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        return queue.size
+    }
+
     fun put(key: String, value: String) {
         // TTL 지정하지 않았으면, LONG 의 최대값으로 처리
         CustomLogger.info("$key 에 $value 를 넣습니다. 만료시간: X")

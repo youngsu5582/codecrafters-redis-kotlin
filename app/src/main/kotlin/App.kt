@@ -77,6 +77,12 @@ private fun executeCommand(value: RespValue.Array): String {
         return convertData(RespValue.Integers(size))
     }
 
+    if (command == "LLEN") {
+        val key = args[1]
+        val length = cache.leftLength(key)
+        return convertData(RespValue.Integers(length))
+    }
+
     if (command == "SET") {
         val key = args[1]
         val value = args[2]

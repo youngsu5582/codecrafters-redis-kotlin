@@ -145,4 +145,24 @@ class CacheTests {
             assertTrue { cache.leftRange(key, 0, -1) == listOf("c", "b", "a") }
         }
     }
+
+    @Nested
+    inner class LeftLengthTest {
+        @Test
+        fun `LLEN 은 길이를 반환한다`() {
+            val cache = Cache()
+            val key = "list_key"
+            cache.leftPush(key, listOf("a", "b", "c"))
+            val length = cache.leftLength(key)
+            assertTrue { length == 3 }
+        }
+
+        @Test
+        fun `키가 없으면 0을 반환한다`() {
+            val cache = Cache()
+            val key = "not_exist_list_key"
+            val length = cache.leftLength(key)
+            assertTrue { length == 0 }
+        }
+    }
 }
