@@ -113,5 +113,11 @@ class CacheTests {
         fun `start 가 stop 보다 크면, 빈 배열을 반환한다`() {
             assertTrue { cache.leftRange("key", 4, 2) == emptyList<String>() }
         }
+
+        @Test
+        fun `start stop 의 index 가 음수이면 배열의 크기에서 역으로 처리한다`() {
+            assertTrue { cache.leftRange("key", -2, -1) == listOf("d", "e") }
+            assertTrue { cache.leftRange("key", 0, -3) == listOf("a", "b", "c") }
+        }
     }
 }

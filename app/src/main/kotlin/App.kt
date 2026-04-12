@@ -209,9 +209,7 @@ fun convertData(value: RespValue): String {
             val length = value.value.size
             val builder = StringBuilder()
             builder.append("*" + length + Constant.LINE_SEPARATOR)
-            value.value.forEach { it ->
-                builder.append(convertData(it))
-            }
+            value.value.forEach { builder.append(convertData(it)) }
             builder.toString()
         }
     }

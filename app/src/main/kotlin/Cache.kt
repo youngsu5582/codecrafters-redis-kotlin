@@ -34,9 +34,12 @@ class Cache(
     fun leftRange(key: String, start: Int, stop: Int): List<String> {
         val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
         val array = mutableListOf<String>()
+        val startIndex = if (start >= 0) start else queue.size + start
+        val stopIndex = if (stop >= 0) stop else queue.size + stop
+
         for ((i, element) in queue.withIndex()) {
-            if (i > stop) break
-            if (i >= start) array.add(element)
+            if (i > stopIndex) break
+            if (i >= startIndex) array.add(element)
         }
         return array
     }
