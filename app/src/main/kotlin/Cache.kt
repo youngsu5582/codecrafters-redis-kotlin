@@ -56,6 +56,13 @@ class Cache(
         return queue.size
     }
 
+    fun leftPop(key: String): String? {
+        removeExpiryData()
+        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        if (queue.isEmpty()) return null
+        return queue.removeFirst()
+    }
+
     fun put(key: String, value: String) {
         // TTL 지정하지 않았으면, LONG 의 최대값으로 처리
         CustomLogger.info("$key 에 $value 를 넣습니다. 만료시간: X")

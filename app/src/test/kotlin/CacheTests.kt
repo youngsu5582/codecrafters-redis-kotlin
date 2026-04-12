@@ -165,4 +165,17 @@ class CacheTests {
             assertTrue { length == 0 }
         }
     }
+
+    @Nested
+    inner class LeftPopTest {
+        @Test
+        fun `LPOP 은 첫번째 요소를 제거 및 반환한다`() {
+            val cache = Cache()
+            val key = "list_key"
+            cache.rightPush(key, listOf("one", "two", "three", "four", "five"))
+            val element = cache.leftPop(key)
+            assertTrue { element == "one" }
+            assertTrue { cache.leftRange(key, 0, -1) == listOf("two", "three", "four", "five") }
+        }
+    }
 }
