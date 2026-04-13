@@ -85,8 +85,13 @@ private fun executeCommand(value: RespValue.Array): String {
 
     if (command == "LPOP") {
         val key = args[1]
-        val value = cache.leftPop(key) ?: return convertData(RespValue.Empty)
-        return convertData(RespValue.BulkString(value))
+        if (args.size <= 2) {
+            val value = cache.leftPop(key) ?: return convertData(RespValue.Empty)
+            return convertData(RespValue.BulkString(value))
+        }
+        val size = args[2].toInt()
+        val array = cache.leftPop(key, size)
+        return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
     }
 
     if (command == "SET") {

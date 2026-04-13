@@ -177,5 +177,14 @@ class CacheTests {
             assertTrue { element == "one" }
             assertTrue { cache.leftRange(key, 0, -1) == listOf("two", "three", "four", "five") }
         }
+
+        @Test
+        fun `LPOP 에 개수를 입력하면, 개수만큼 배열을 반환한다`() {
+            val cache = Cache()
+            val key = "list_key"
+            cache.rightPush(key, listOf("one", "two", "three", "four", "five"))
+            val array = cache.leftPop(key, 2)
+            assertTrue { array == listOf("one", "two") }
+        }
     }
 }
