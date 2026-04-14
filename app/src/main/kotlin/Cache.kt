@@ -2,6 +2,9 @@ import clock.Clock
 import clock.SystemClock
 import util.CustomLogger
 import java.util.*
+import java.util.concurrent.BlockingDeque
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -13,19 +16,19 @@ class Cache(
     // -> Expiry 단계 진행하며, 테이블 추가
     private val timeTable = TreeMap<Long, MutableSet<String>>()
     private val cache = hashMapOf<String, String>()
-    private val arrayCache = hashMapOf<String, Deque<String>>()
+    private val arrayCache = hashMapOf<String, BlockingDeque<String>>()
 
     // 시간 테스팅 용이하게 하기 위한 인터페이스 주입
 
     fun rightPush(key: String, elements: List<String>): Int {
-        val array: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val array: BlockingDeque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         elements.forEach { array.addLast(it) }
         arrayCache[key] = array
         return array.size
     }
 
     fun leftPush(key: String, elements: List<String>): Int {
-        val array: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val array: BlockingDeque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         elements.forEach { array.addFirst(it) }
         arrayCache[key] = array
         return array.size
@@ -39,7 +42,7 @@ class Cache(
      * - start 가 stop 보다 크면, 빈 배열 반환
      */
     fun leftRange(key: String, start: Int, stop: Int): List<String> {
-        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val queue: Deque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         val array = mutableListOf<String>()
         val startIndex = if (start >= 0) start else queue.size + start
         val stopIndex = if (stop >= 0) stop else queue.size + stop
@@ -52,20 +55,28 @@ class Cache(
     }
 
     fun leftLength(key: String): Int {
-        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val queue: Deque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         return queue.size
+    }
+
+    fun blockLeftPop(key: String, timeout: Long): String? {
+        val queue: BlockingDeque<String> = arrayCache.getOrPut(key, { LinkedBlockingDeque() })
+        // 만료할 시간
+
+        return if (timeout == 0L) queue.takeFirst()
+        else queue.pollFirst(timeout, TimeUnit.MILLISECONDS)
     }
 
     fun leftPop(key: String): String? {
         removeExpiryData()
-        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val queue: Deque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         if (queue.isEmpty()) return null
         return queue.removeFirst()
     }
 
     fun leftPop(key: String, size: Int): List<String> {
         removeExpiryData()
-        val queue: Deque<String> = arrayCache.getOrDefault(key, ArrayDeque())
+        val queue: Deque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         val array = mutableListOf<String>()
         for (i in 0 until size) {
             array.add(queue.removeFirst())

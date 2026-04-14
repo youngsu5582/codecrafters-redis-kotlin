@@ -94,6 +94,17 @@ private fun executeCommand(value: RespValue.Array): String {
         return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
     }
 
+    if (command == "BLPOP") {
+        val key = args[1]
+        val timeout = args[2].toLong()
+        val element = cache.blockLeftPop(key, timeout)?.let {
+            RespValue.BulkString(it)
+        } ?: return convertData(RespValue.NullArray)
+
+        val listName = RespValue.BulkString(key)
+        return convertData(RespValue.Array(listOf(listName, element)))
+    }
+
     if (command == "SET") {
         val key = args[1]
         val value = args[2]
@@ -175,6 +186,7 @@ sealed class RespValue {
     data class SimpleString(val value: String) : RespValue()
     data class BulkString(val value: String) : RespValue()
     object Empty : RespValue()
+    object NullArray : RespValue()
     data class Error(val value: String) : RespValue()
     data class Integers(val value: Int) : RespValue()
     data class Array(val value: List<RespValue>) : RespValue()
@@ -235,6 +247,10 @@ fun convertData(value: RespValue): String {
             builder.append("*" + length + Constant.LINE_SEPARATOR)
             value.value.forEach { builder.append(convertData(it)) }
             builder.toString()
+        }
+
+        is RespValue.NullArray -> {
+            "*" + -1 + Constant.LINE_SEPARATOR
         }
     }
 }

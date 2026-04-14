@@ -2,6 +2,12 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
+import kotlin.time.measureTimedValue
 
 class CacheTests {
     @Test
@@ -185,6 +191,56 @@ class CacheTests {
             cache.rightPush(key, listOf("one", "two", "three", "four", "five"))
             val array = cache.leftPop(key, 2)
             assertTrue { array == listOf("one", "two") }
+        }
+    }
+
+    @Nested
+    inner class BlockLeftPopTest {
+
+        @Test
+        fun `timeout 동안 값이 들어오지 않으면, null 을 반환한다`() {
+            val cache = Cache()
+            val time = measureTimedValue {
+
+                // 100ms = 0.1초
+                val value = cache.blockLeftPop("not-exist-key", 100)
+                assertNull(value)
+            }
+            println(time.duration.inWholeMilliseconds)
+        }
+
+        @Test
+        fun `0을 입력하면 timeout 을 지정하지 않고, 무한정 대기한다`() {
+            val cache = Cache()
+            val started = CountDownLatch(1)
+
+            val thread = thread {
+                started.countDown()
+                cache.blockLeftPop("timeout-key", 0)
+            }
+
+            started.await()
+            Thread.sleep(50)
+            assertTrue { thread.isAlive }
+            thread.interrupt()
+        }
+
+        @Test
+        fun `대기중 값이 들어오면, blocking 풀리고 pop 한다`() {
+            val cache = Cache()
+            val started = CountDownLatch(1)
+            val future = CompletableFuture<String?>()
+
+            thread {
+                started.countDown()
+                future.complete(cache.blockLeftPop("key", 0))
+            }
+
+            started.await()
+            Thread.sleep(50)
+            cache.leftPush("key", listOf("resolve-value"))
+
+            assertTrue { future.get(2, TimeUnit.SECONDS) == "resolve-value" }
         }
     }
 }
