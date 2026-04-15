@@ -94,6 +94,12 @@ private fun executeCommand(value: RespValue.Array): String {
         return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
     }
 
+    if (command == "TYPE") {
+        val key = args[1]
+        val type = cache.type(key)
+        return convertData(RespValue.SimpleString(type))
+    }
+
     if (command == "BLPOP") {
         val key = args[1]
 

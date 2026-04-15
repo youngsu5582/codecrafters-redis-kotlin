@@ -243,4 +243,27 @@ class CacheTests {
             assertTrue { future.get(2, TimeUnit.SECONDS) == "resolve-value" }
         }
     }
+
+    @Nested
+    inner class TypeTest {
+        @Test
+        fun `TYPE Command 는 key 에 해당하는 타입을 반환해준다`() {
+            val cache = Cache()
+            cache.put("string-key", "string-value")
+            cache.leftPush("list-key", listOf("list-value"))
+
+            val stringType = cache.type("string-key")
+            val listType = cache.type("list-key")
+
+            assertTrue { stringType == "string" }
+            assertTrue { listType == "list" }
+        }
+
+        @Test
+        fun `key 에 저장된 값이 없으면 none 을 반환한다`(){
+            val cache = Cache()
+            val noneType = cache.type("not-exist-key")
+            assertTrue { noneType == "none" }
+        }
+    }
 }

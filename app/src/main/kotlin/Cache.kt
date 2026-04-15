@@ -20,6 +20,16 @@ class Cache(
 
     // 시간 테스팅 용이하게 하기 위한 인터페이스 주입
 
+    fun type(key: String): String {
+        if (cache.containsKey(key)) {
+            return "string"
+        }
+        if (arrayCache.containsKey(key)) {
+            return "list"
+        }
+        return "none"
+    }
+
     fun rightPush(key: String, elements: List<String>): Int {
         val array: BlockingDeque<String> = arrayCache.getOrDefault(key, LinkedBlockingDeque())
         elements.forEach { array.addLast(it) }
