@@ -96,7 +96,9 @@ private fun executeCommand(value: RespValue.Array): String {
 
     if (command == "BLPOP") {
         val key = args[1]
-        val timeout = args[2].toLong()
+
+        // second 단위를 millisecond 단위로 변경
+        val timeout = (args[2].toDouble() * 1000).toLong()
         val element = cache.blockLeftPop(key, timeout)?.let {
             RespValue.BulkString(it)
         } ?: return convertData(RespValue.NullArray)
