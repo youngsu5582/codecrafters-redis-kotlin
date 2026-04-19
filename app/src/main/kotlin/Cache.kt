@@ -17,8 +17,24 @@ class Cache(
     private val timeTable = TreeMap<Long, MutableSet<String>>()
     private val cache = hashMapOf<String, String>()
     private val arrayCache = hashMapOf<String, BlockingDeque<String>>()
+    private val streamCache = hashMapOf<String, StreamEntries>()
 
     // 시간 테스팅 용이하게 하기 위한 인터페이스 주입
+
+    fun xAdd(streamKey: String, entryId: String, data: Map<String, String>): String {
+        val entries = streamCache[streamKey]
+
+        // 없어서 새로 추가
+        if (entries == null) {
+            val value = mutableMapOf<String, StreamEntry>()
+            value[entryId] = StreamEntry(data)
+
+            val entries = StreamEntries(value)
+            streamCache[streamKey] = entries
+            return entryId
+        }
+        TODO("요구하는 step 에서 추가할 예정")
+    }
 
     fun type(key: String): String {
         if (cache.containsKey(key)) {
@@ -26,6 +42,9 @@ class Cache(
         }
         if (arrayCache.containsKey(key)) {
             return "list"
+        }
+        if (streamCache.containsKey(key)) {
+            return "stream"
         }
         return "none"
     }

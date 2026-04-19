@@ -55,6 +55,17 @@ private fun executeCommand(value: RespValue.Array): String {
         return convertData(RespValue.BulkString(args[1]))
     }
 
+    if (command == "XADD") {
+        val streamKey = args[1]
+        val entryId = args[2]
+        val data = args.drop(3)
+            .chunked(2)
+            .associate { (k, v) -> k to v }
+
+        val key = cache.xAdd(streamKey, entryId, data)
+        return convertData(RespValue.BulkString(key))
+    }
+
     if (command == "LRANGE") {
         val key = args[1]
         val start = args[2].toInt()
