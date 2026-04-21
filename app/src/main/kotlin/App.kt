@@ -47,107 +47,115 @@ private fun executeCommand(value: RespValue.Array): String {
     println("executing command $value")
     val args = value.value.map { (it as RespValue.BulkString).value }
     val command = args[0].uppercase()
-    if (command == "PING") {
-        RespValue.SimpleString("PONG")
-        return convertData(RespValue.SimpleString("PONG"))
-    }
-    if (command == "ECHO") {
-        return convertData(RespValue.BulkString(args[1]))
-    }
 
-    if (command == "XADD") {
-        val streamKey = args[1]
-        val entryId = args[2]
-        val data = args.drop(3)
-            .chunked(2)
-            .associate { (k, v) -> k to v }
-
-        val key = cache.xAdd(streamKey, entryId, data)
-        return convertData(RespValue.BulkString(key))
-    }
-
-    if (command == "LRANGE") {
-        val key = args[1]
-        val start = args[2].toInt()
-        val end = args[3].toInt()
-        val array = cache.leftRange(key, start, end)
-        return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
-    }
-
-    if (command == "RPUSH") {
-        val key = args[1]
-        val value = args.subList(2, args.size)
-        val size = cache.rightPush(key, value)
-        return convertData(RespValue.Integers(size))
-    }
-
-    if (command == "LPUSH") {
-        val key = args[1]
-        val value = args.subList(2, args.size)
-        val size = cache.leftPush(key, value)
-        return convertData(RespValue.Integers(size))
-    }
-
-    if (command == "LLEN") {
-        val key = args[1]
-        val length = cache.leftLength(key)
-        return convertData(RespValue.Integers(length))
-    }
-
-    if (command == "LPOP") {
-        val key = args[1]
-        if (args.size <= 2) {
-            val value = cache.leftPop(key) ?: return convertData(RespValue.Empty)
-            return convertData(RespValue.BulkString(value))
+    try {
+        if (command == "PING") {
+            RespValue.SimpleString("PONG")
+            return convertData(RespValue.SimpleString("PONG"))
         }
-        val size = args[2].toInt()
-        val array = cache.leftPop(key, size)
-        return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
-    }
+        if (command == "ECHO") {
+            return convertData(RespValue.BulkString(args[1]))
+        }
 
-    if (command == "TYPE") {
-        val key = args[1]
-        val type = cache.type(key)
-        return convertData(RespValue.SimpleString(type))
-    }
+        if (command == "XADD") {
+            val streamKey = args[1]
+            val entryKeyInfo = args[2]
+            val (tsPart, seqPart) = entryKeyInfo.split("-", limit = 2)
+            val entryKey = EntryKey(
+                timestamp = tsPart.toLong(),
+                sequenceNumber = seqPart.toLong(),
+            )
 
-    if (command == "BLPOP") {
-        val key = args[1]
+            val data = args.drop(3)
+                .chunked(2)
+                .associate { (k, v) -> k to v }
 
-        // second 단위를 millisecond 단위로 변경
-        val timeout = (args[2].toDouble() * 1000).toLong()
-        val element = cache.blockLeftPop(key, timeout)?.let {
-            RespValue.BulkString(it)
-        } ?: return convertData(RespValue.NullArray)
+            val key = cache.xAdd(streamKey, entryKey, data)
+            return convertData(RespValue.BulkString(key.toFormatString()))
+        }
 
-        val listName = RespValue.BulkString(key)
-        return convertData(RespValue.Array(listOf(listName, element)))
-    }
+        if (command == "LRANGE") {
+            val key = args[1]
+            val start = args[2].toInt()
+            val end = args[3].toInt()
+            val array = cache.leftRange(key, start, end)
+            return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
+        }
 
-    if (command == "SET") {
-        val key = args[1]
-        val value = args[2]
-        if (args.size <= 3) {
-            cache.put(key, value)
+        if (command == "RPUSH") {
+            val key = args[1]
+            val value = args.subList(2, args.size)
+            val size = cache.rightPush(key, value)
+            return convertData(RespValue.Integers(size))
+        }
+
+        if (command == "LPUSH") {
+            val key = args[1]
+            val value = args.subList(2, args.size)
+            val size = cache.leftPush(key, value)
+            return convertData(RespValue.Integers(size))
+        }
+
+        if (command == "LLEN") {
+            val key = args[1]
+            val length = cache.leftLength(key)
+            return convertData(RespValue.Integers(length))
+        }
+
+        if (command == "LPOP") {
+            val key = args[1]
+            if (args.size <= 2) {
+                val value = cache.leftPop(key) ?: return convertData(RespValue.Empty)
+                return convertData(RespValue.BulkString(value))
+            }
+            val size = args[2].toInt()
+            val array = cache.leftPop(key, size)
+            return convertData(RespValue.Array(array.map { RespValue.BulkString(it) }))
+        }
+
+        if (command == "TYPE") {
+            val key = args[1]
+            val type = cache.type(key)
+            return convertData(RespValue.SimpleString(type))
+        }
+
+        if (command == "BLPOP") {
+            val key = args[1]
+
+            // second 단위를 millisecond 단위로 변경
+            val timeout = (args[2].toDouble() * 1000).toLong()
+            val element = cache.blockLeftPop(key, timeout)?.let {
+                RespValue.BulkString(it)
+            } ?: return convertData(RespValue.NullArray)
+
+            val listName = RespValue.BulkString(key)
+            return convertData(RespValue.Array(listOf(listName, element)))
+        }
+
+        if (command == "SET") {
+            val key = args[1]
+            val value = args[2]
+            if (args.size <= 3) {
+                cache.put(key, value)
+                return convertData(RespValue.SimpleString("OK"))
+            }
+
+            val option = TimeOption.from(args[3])
+            val number = args[4].toLong()
+
+            cache.put(key, value, option.toMills(number))
             return convertData(RespValue.SimpleString("OK"))
         }
-
-        val option = TimeOption.from(args[3])
-        val number = args[4].toLong()
-
-        cache.put(key, value, option.toMills(number))
-        return convertData(RespValue.SimpleString("OK"))
-    }
-    if (command == "GET") {
-        val key = args[1]
-        val value = cache.get(key)
-        if (value == null) {
-            return convertData(RespValue.Empty)
+        if (command == "GET") {
+            val key = args[1]
+            val value = cache.get(key) ?: return convertData(RespValue.Empty)
+            return convertData(RespValue.BulkString(value))
         }
-        return convertData(RespValue.BulkString(value))
-    }
 
-    throw IllegalArgumentException("Unknown command $command")
+        throw IllegalArgumentException("Unknown command $command")
+    } catch (e: CustomException) {
+        return convertData(RespValue.Error(e.message!!))
+    }
 }
 
 

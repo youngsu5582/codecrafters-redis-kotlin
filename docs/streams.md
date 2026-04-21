@@ -38,8 +38,30 @@ Kafka 와 비슷하게 동작한다. (메시지 읽는 Consumer, 여러 Consumer
 
 - `XDEL` : 특정 메시지를 삭제
 
-
-
-
 > 여러모로, Kafka 의 Consumer Group 과 동일하게 돈다. `at-least-once`
+
+### Entry ID
+
+entry 들의 순서를 보장하는 요소 (단순, 식별자 값이 아님)
+
+`<milliseconds>-<sequenceNumber>`
+
+- 같은 stream 내에서 유일해야 함
+- 항상 증가해야 한다
+  - 새 entry 의 ID 는 이전 entry 보다 반드시 커야 함
+
+3가지 방법으로 ID 지정이 가능하다.
+
+- 명시적 : 시간, 시퀸스 모두 직접 지정 - `1526919030474-0`
+- 시퀸스 자동 : 시간만 지정, 시퀀스 번호 자동 생성 - `1526919030474-*`
+- 전체 자동 : 시간, 시퀸스 자동 생성 - `*`
+
+검증 규칙
+
+- 새 ID 는 마지막 Entry ID 보다 커야만 하다 (새 ID ms >= 마지막 ID ms)
+- ms 가 같다면, 새 ID 의 sequenceNumber > 마지막 ID 의 sequenceNumber
+- stream 이 빈 상태면, ID 는 `0-0` 보다 커야한다.(최소 `0-1`)
+
+
+
 

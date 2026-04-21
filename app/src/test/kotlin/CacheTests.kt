@@ -2,6 +2,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -260,10 +261,48 @@ class CacheTests {
         }
 
         @Test
-        fun `key 에 저장된 값이 없으면 none 을 반환한다`(){
+        fun `key 에 저장된 값이 없으면 none 을 반환한다`() {
             val cache = Cache()
             val noneType = cache.type("not-exist-key")
             assertTrue { noneType == "none" }
+        }
+    }
+
+    @Nested
+    inner class XaddTest {
+
+        private val data = mapOf(Pair("stream-data", "value"))
+
+        @Test
+        fun `XADD 는 없는 streamKey 입력시 새롭게 stream 을 생성후 key 를 반환한다`() {
+            val cache = Cache()
+            val entryKey = EntryKey(0, 1)
+            val key = cache.xAdd("stream-key", entryKey, data)
+            assertTrue { key == entryKey }
+        }
+
+        @Test
+        fun `XADD 는 이전 stream Key 보다 큰 값을 입력해야만 한다`() {
+            val cache = Cache()
+            val entryKey1 = EntryKey(1, 1)
+            val entryKey2 = EntryKey(0, 1)
+
+            cache.xAdd("stream-key", entryKey1, data)
+            assertThrows<CustomException> {
+                cache.xAdd("stream-key", entryKey2, data)
+            }
+        }
+
+        @Test
+        fun `XADD 는 timestamp 과 동일하면, sequenceNumber 가 더 커야 한다`() {
+            val cache = Cache()
+            val entryKey1 = EntryKey(1, 3)
+            val entryKey2 = EntryKey(1, 2)
+
+            cache.xAdd("stream-key", entryKey1, data)
+            assertThrows<CustomException> {
+                cache.xAdd("stream-key", entryKey2, data)
+            }
         }
     }
 }

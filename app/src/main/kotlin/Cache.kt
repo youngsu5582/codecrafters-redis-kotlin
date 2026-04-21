@@ -21,19 +21,26 @@ class Cache(
 
     // 시간 테스팅 용이하게 하기 위한 인터페이스 주입
 
-    fun xAdd(streamKey: String, entryId: String, data: Map<String, String>): String {
+    fun xAdd(streamKey: String, entryKey: EntryKey, data: Map<String, String>): EntryKey {
         val entries = streamCache[streamKey]
+        val streamEntry = StreamEntry(data)
 
         // 없어서 새로 추가
         if (entries == null) {
-            val value = mutableMapOf<String, StreamEntry>()
-            value[entryId] = StreamEntry(data)
+            val value = TreeMap<EntryKey, StreamEntry>()
+            value[entryKey] = streamEntry
 
             val entries = StreamEntries(value)
             streamCache[streamKey] = entries
-            return entryId
+            return entryKey
         }
-        TODO("요구하는 step 에서 추가할 예정")
+        val lastKey = entries.lastKey()
+        if (lastKey >= entryKey) {
+            throw CustomException(ErrorCode.SMALLER_OR_EQUAL)
+        }
+
+        entries.put(entryKey, streamEntry)
+        return entryKey
     }
 
     fun type(key: String): String {
